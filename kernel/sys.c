@@ -1654,4 +1654,9 @@ int orderly_poweroff(bool force)
 
 	return ret;
 }
+asmlinkage long sys_mycall(int number)
+{
+	printk("call number %d\n", number);
+	return number;
+}
 EXPORT_SYMBOL_GPL(orderly_poweroff);

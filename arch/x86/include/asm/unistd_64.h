@@ -661,6 +661,8 @@ __SYSCALL(__NR_pwritev, sys_pwritev)
 __SYSCALL(__NR_rt_tgsigqueueinfo, sys_rt_tgsigqueueinfo)
 #define __NR_perf_event_open			298
 __SYSCALL(__NR_perf_event_open, sys_perf_event_open)
+#define __NR_mycall 299
+__SYSCALL(__NR_mycall, sys_mycall)
 
 #ifndef __NO_STUBS
 #define __ARCH_WANT_OLD_READDIR
@@ -691,7 +693,7 @@ __SYSCALL(__NR_perf_event_open, sys_perf_event_open)
 
 #ifndef COMPILE_OFFSETS
 #include <asm/asm-offsets.h>
-#define NR_syscalls (__NR_syscall_max + 1)
+#define NR_syscalls (__NR_syscall_max + 2)
 #endif
 
 /*
