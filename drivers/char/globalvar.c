@@ -1,6 +1,7 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/fs.h>
+#include <linux/device.h> 
 #include <asm/uaccess.h> 
 
 #define MAJOR_NUM 1024 //主设备号
@@ -8,6 +9,8 @@
 int global_var = 0; //"globalvar"设备的全局变量
 EXPORT_SYMBOL(global_var);
 
+static struct class *globalvar_class;
+static struct device *globalvar_dev;
 static ssize_t globalvar_read(struct file *, char *, size_t, loff_t*);
 static ssize_t globalvar_write(struct file *, const char *, size_t, loff_t*);
 
@@ -47,6 +50,8 @@ static int __init globalvar_init(void){
       else{
             printk("globalvar register success");
       }
+      globalvar_class = class_create(THIS_MODULE, "globalvar");
+      globalvar_dev = device_create(globalvar_class, NULL, MKDEV(MAJOR_NUM, 0), NULL, "globalvar");
       return ret;
 }
 //注销设备驱动

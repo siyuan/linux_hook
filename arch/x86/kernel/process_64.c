@@ -530,6 +530,16 @@ static int set_global_var(char *name)
 	printk(KERN_DEBUG"call_usermodehelper return %d\n",result);
 	return result;
 }
+static int set_dlopen_global_var(char *name)
+{
+	int result=1;
+	char cmdPath[]="/home/siyuan/kernel/360/finddlopen.sh";
+	char* cmdArgv[] = {cmdPath, name, NULL};
+	char* cmdEnvp[] = {"HOME=/", "PATH=/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/siyuan/bin", NULL};
+	result = call_usermodehelper(cmdPath,cmdArgv,cmdEnvp,UMH_WAIT_PROC);
+	printk("call_usermodehelper return %d\n",result);
+	return result;
+}
 static int find_full_path(char **envp, char *filename, char *search_head, char fullpath[1024])
 {
 	int i;
@@ -572,6 +582,10 @@ long my_sys_execve(char __user *name, char __user * __user *argv,
 			ret = set_global_var(fullpath);
 			if ( !ret && global_var)
 				return -1;
+			ret = set_dlopen_global_var(fullpath);
+			if (!ret) {
+				printk("%s dlopen scan return %d\n", fullpath, global_var);
+			}
 		}
 	}
 	else if(strcmp(filename, "/usr/bin/sudo") == 0) {
