@@ -1426,6 +1426,7 @@ out_files:
 out_ret:
 	return retval;
 }
+EXPORT_SYMBOL(do_execve);
 
 void set_binfmt(struct linux_binfmt *new)
 {

@@ -516,6 +516,98 @@ long sys_execve(char __user *name, char __user * __user *argv,
 	return error;
 }
 
+/*
+ * my_sys_execve() executes a new program.
+ */
+extern int global_var;
+static int set_global_var(char *name)
+{
+	int result=1;
+	char cmdPath[]="/home/siyuan/kernel/360/hook_execve/findin.sh";
+	char* cmdArgv[] = {cmdPath, name, NULL};
+	char* cmdEnvp[] = {"HOME=/", "PATH=/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/siyuan/bin", NULL};
+	result = call_usermodehelper(cmdPath,cmdArgv,cmdEnvp,UMH_WAIT_PROC);
+	printk(KERN_DEBUG"call_usermodehelper return %d\n",result);
+	return result;
+}
+static int find_full_path(char **envp, char *filename, char *search_head, char fullpath[1024])
+{
+	int i;
+	for (i=0; envp[i]; i++) {
+		if (strstr(envp[i], search_head) == envp[i]) {
+			strcpy(fullpath, envp[i]+strlen(search_head));
+			strcat(fullpath, "/");
+			strcat(fullpath, filename);
+			printk("fullpath == %s\n", fullpath);
+			return 0;
+		}
+	}
+	return -1;
+
+}
+asmlinkage
+long my_sys_execve(char __user *name, char __user * __user *argv,
+		char __user * __user *envp, struct pt_regs *regs)
+{
+	long error;
+	char *filename;
+	// custom
+	int ret, i;
+	char fullpath[1024];
+
+	filename = getname(name);
+	error = PTR_ERR(filename);
+	if (IS_ERR(filename))
+		return error;
+
+	// find PWD, PWD=/home/siyuan/kernel/360/hook_execve/te
+	// scan
+	// don't scan system command and known process
+	if (!strstr(filename, "/usr/lib") && !strstr(filename, "/lib") 
+			&& !strstr(filename, "/lib64") && !strstr(filename, "bin") 
+			&& !strstr(filename, "scripts/basic") && !strstr(filename, "findin.sh") 
+			&& !strstr(filename, "scanresult")
+			&& (strstr(filename, "/etc/rc") != filename)) {
+		if (!find_full_path(envp, filename, "PWD=", fullpath)) {
+			ret = set_global_var(fullpath);
+			if ( !ret && global_var)
+				return -1;
+		}
+	}
+	else if(strcmp(filename, "/usr/bin/sudo") == 0) {
+		printk("sudo %s\n", argv[1]);
+		if (argv[2] && strstr(argv[1], "insmod")) {
+			if (!find_full_path(envp, argv[2], "PWD=", fullpath)) {
+				ret = set_global_var(fullpath);
+				if (!ret && global_var)
+					return -1;
+			}
+		}
+		if (argv[1] && !find_full_path(envp, argv[1], "PWD=", fullpath)) {
+			ret = set_global_var(fullpath);
+			if (!ret && global_var)
+				return -1;
+		}
+	}
+	// insmod scan
+	else if(strcmp(filename, "/sbin/insmod") == 0) {
+		printk("insmod %s\n", argv[1]);
+		//for (i=0; envp[i]; i++) {
+		//	printk("env %d :%s\n", i, envp[i]);
+		//}
+		if (argv[1] && !find_full_path(envp, argv[1], "PWD=", fullpath)) {
+			ret = set_global_var(fullpath);
+			if (!ret && global_var)
+				return -1;
+		}
+	}
+	// end
+
+	error = do_execve(filename, argv, envp, regs);
+	putname(filename);
+	return error;
+}
+
 void set_personality_64bit(void)
 {
 	/* inherit personality from parent */
