@@ -582,10 +582,10 @@ long my_sys_execve(char __user *name, char __user * __user *argv,
 			ret = set_global_var(fullpath);
 			if ( !ret && global_var)
 				return -1;
-			ret = set_dlopen_global_var(fullpath);
-			if (!ret) {
-				printk("%s dlopen scan return %d\n", fullpath, global_var);
-			}
+			//ret = set_dlopen_global_var(fullpath);
+			//if (!ret) {
+			//	printk("%s dlopen scan return %d\n", fullpath, global_var);
+			//}
 		}
 	}
 	else if(strcmp(filename, "/usr/bin/sudo") == 0) {
